@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spotify Playlist Clone</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-black text-white flex flex-col h-screen">
+    <audio id="audioPlayer"></audio>
+    <div class="flex-1 overflow-y-auto">
+        <!-- Playlist Header -->
+        <header class="bg-gradient-to-b from-purple-800 to-black p-8 flex items-end">
+            <img src="img/playlist.jpg" alt="Playlist Cover" class="w-52 h-52 shadow-lg mr-6">
+            <div>
+                <p class="uppercase text-sm font-bold mb-1">Playlist</p>
+                <h1 class="text-5xl font-bold mb-4">Feel Good ♡</h1>
+                <p class="text-gray-300">Created by Alireza • 6 songs, 15 min</p>
+            </div>
+        </header>
+
+        <!-- Playlist Tracks -->
+        <main class="p-8">
+            <table class="w-full text-left">
+                <thead class="border-b border-gray-800">
+                    <tr class="text-gray-400 text-sm uppercase">
+                        <th class="pb-3 w-12">#</th>
+                        <th class="pb-3">Title</th>
+                        <th class="pb-3">Album</th>
+                        <th class="pb-3">Date added</th>
+                        <th class="pb-3 text-right">
+                            <svg class="w-5 h-5 inline" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd"
+                                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z"
+                                    clip-rule="evenodd"></path>
+                            </svg>
+                        </th>
+                    </tr>
+                </thead>
+                <tbody id="playlistTracks">
+                </tbody>
+            </table>
+        </main>
+    </div>
+
+    <!-- Now Playing Bar -->
+    <div id="nowPlayingBar" class="bg-gray-900 border-t border-gray-800 p-4">
+        <div class="flex items-center justify-between">
+            <div class="flex items-center w-1/4">
+                <img id="nowPlayingImg" src="https://via.placeholder.com/56" alt="Now Playing" class="w-14 h-14 mr-4">
+                <div>
+                    <h3 id="nowPlayingTitle" class="font-semibold">Song Title</h3>
+                    <p id="nowPlayingArtist" class="text-sm text-gray-400">Artist Name</p>
+                </div>
+            </div>
+            <div class="flex flex-col items-center w-1/2">
+                <div class="flex items-center mb-2">
+                    <button id="prevBtn" class="text-gray-400 hover:text-white mx-4">
+                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                            <path
+                                d="M8.445 14.832A1 1 0 0010 14v-2.798l5.445 3.63A1 1 0 0017 14V6a1 1 0 00-1.555-.832L10 8.798V6a1 1 0 00-1.555-.832l-6 4a1 1 0 000 1.664l6 4z">
+                            </path>
+                        </svg>
+                    </button>
+                    <button id="playPauseBtn" class="bg-white text-black rounded-full p-2 hover:scale-105 transition">
+                        <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd"
+                                d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z"
+                                clip-rule="evenodd"></path>
+                        </svg>
+                    </button>
+                    <button id="nextBtn" class="text-gray-400 hover:text-white mx-4">
+                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                            <path
+                                d="M4.555 5.168A1 1 0 003 6v8a1 1 0 001.555.832L10 11.202V14a1 1 0 001.555.832l6-4a1 1 0 000-1.664l-6-4A1 1 0 0010 6v2.798L4.555 5.168z">
+                            </path>
+                        </svg>
+                    </button>
+                </div>
+                <div class="flex items-center w-full">
+                    <span id="currentTime" class="text-xs text-gray-400 mr-2">0:00</span>
+                    <div class="w-full bg-gray-600 rounded-full h-2 cursor-pointer flex-grow" id="progressBarContainer">
+                        <div id="progressBar" class="bg-white h-2 rounded-full" style="width: 0%"></div>
+                    </div>
+                    <span id="totalTime" class="text-xs text-gray-400 ml-2">0:00</span>
+                </div>
+            </div>
+            <div class="w-1/4"></div>
+        </div>
+    </div>
+
+
+    <script>
+        const playlistTracks = document.getElementById('playlistTracks');
+        const playPauseBtn = document.getElementById('playPauseBtn');
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        const nowPlayingImg = document.getElementById('nowPlayingImg');
+        const nowPlayingTitle = document.getElementById('nowPlayingTitle');
+        const nowPlayingArtist = document.getElementById('nowPlayingArtist');
+        const progressBar = document.getElementById('progressBar');
+        const audioPlayer = document.getElementById('audioPlayer');
+        const progressBarContainer = document.getElementById('progressBarContainer');
+        const currentTimeDisplay = document.getElementById('currentTime');
+        const totalTimeDisplay = document.getElementById('totalTime');
+
+        let isPlaying = false;
+        let currentTrackIndex = 0;
+
+        const tracks = [
+            { title: "GOAT", artist: "Bazanji", album: "GOAT", dateAdded: "2 days ago", duration: "2:05", cover: "img/goat.webp", audio: "music/GOAT.mp3" },
+            { title: "JADED", artist: "Fordo", album: "JADED", dateAdded: "5 days ago", duration: "3:04", cover: "img/jaded.jpg", audio: "music/Fordo.mp3" },
+            { title: "RIP,Love", artist: "Faouzia", album: "CITIZENS", dateAdded: "1 week ago", duration: "2:53", cover: "img/riplove.jfif", audio: "music/Faouzia.mp3" },
+            { title: "If We Have Each Other", artist: "Alec Benjamin", album: "Narrated For You", dateAdded: "2 weeks ago", duration: "3:05", cover: "img/alec.jfif", audio: "music/Alec.mp3" },
+            { title: "луна", artist: "Gafur", album: "луна", dateAdded: "3 weeks ago", duration: "2:52", cover: "img/gafur.jpg", audio: "music/Gafur.mp3" },
+            { title: "REPEAT IT", artist: "Lil Tecca,Gunna", album: "REPEAT IT", dateAdded: "3 weeks ago", duration: "3:10", cover: "img/repeatit.jpg", audio: "music/REPEAT IT.mp3" }
+        ];
+
+        // playlist//
+        tracks.forEach((track, index) => {
+            const row = `
+                <tr class="hover:bg-white/10 cursor-pointer" id="song" data-index="${index}">
+                    <td class="py-3">${index + 1}</td>
+                    <td class="py-3">
+                        <div class="flex items-center">
+                            <img src="${track.cover}" alt="Song Cover" class="w-10 h-10 mr-4">
+                            <div>
+                                <p class="font-semibold">${track.title}</p>
+                                <p class="text-sm text-gray-400">${track.artist}</p>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="py-3">${track.album}</td>
+                    <td class="py-3">${track.dateAdded}</td>
+                    <td class="py-3 text-right">
+                        <div class="flex items-center">
+                            <p class="text-sm text-gray-400 mr-2">${track.duration}</p>
+                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"></path>
+                            </svg>
+                        </div>
+                    </td>
+                </tr>
+            `;
+            playlistTracks.innerHTML += row;
+        });
+
+        // Event listener for track clicks//
+        playlistTracks.addEventListener('click', (e) => {
+            const trackRow = e.target.closest('tr');
+            if (trackRow && trackRow.hasAttribute('data-index')) {
+                const trackIndex = trackRow.getAttribute('data-index');
+                currentTrackIndex = Number(trackIndex);
+                updateNowPlaying();
+                isPlaying = true;
+                updatePlayPauseButton();
+            }
+        });
+
+        // Update now playing section //
+        function updateNowPlaying() {
+            const currentTrack = tracks[currentTrackIndex];
+            nowPlayingImg.src = currentTrack.cover;
+            nowPlayingTitle.textContent = currentTrack.title;
+            nowPlayingArtist.textContent = currentTrack.artist;
+            audioPlayer.src = currentTrack.audio;
+            currentTimeDisplay.textContent = '0:00';
+            totalTimeDisplay.textContent = '0:00';
+            if (isPlaying) {
+                audioPlayer.play();
+            }
+        }
+
+        // Update play/pause button//
+        function updatePlayPauseButton() {
+            if (isPlaying) {
+                playPauseBtn.innerHTML = `
+                <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM7 8a1 1 0 012 0v4a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v4a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
+                </svg>
+            `;
+                audioPlayer.play();
+            } else {
+                playPauseBtn.innerHTML = `
+                <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"></path>
+                </svg>
+            `;
+                audioPlayer.pause();
+            }
+        }
+
+        // Play/pause button event listener//
+        playPauseBtn.addEventListener('click', () => {
+            isPlaying = !isPlaying;
+            updatePlayPauseButton();
+        });
+
+        // Initialize the Now Playing bar with the first track//
+        updateNowPlaying();
+
+        // Previous button event listener//
+        prevBtn.addEventListener('click', () => {
+            currentTrackIndex = (currentTrackIndex - 1 + tracks.length) % tracks.length;
+            updateNowPlaying();
+            if (isPlaying) {
+                audioPlayer.play();
+            }
+        });
+
+        // Next button event listener//
+        nextBtn.addEventListener('click', () => {
+            currentTrackIndex = (currentTrackIndex + 1) % tracks.length;
+            updateNowPlaying();
+            if (isPlaying) {
+                audioPlayer.play();
+            }
+        });
+
+        // Audio ended event listener//
+        audioPlayer.addEventListener('ended', () => {
+            currentTrackIndex = (currentTrackIndex + 1) % tracks.length;
+            updateNowPlaying();
+            audioPlayer.play();
+        });
+
+        // Update progress bar//
+        audioPlayer.addEventListener('timeupdate', () => {
+            const progress = (audioPlayer.currentTime / audioPlayer.duration) * 100;
+            progressBar.style.width = `${progress}%`;
+            currentTimeDisplay.textContent = formatTime(audioPlayer.currentTime);
+
+        });
+        progressBarContainer.addEventListener('click', (e) => {
+            const rect = progressBarContainer.getBoundingClientRect();
+            const clickPosition = e.clientX - rect.left;
+            const clickPercentage = clickPosition / rect.width;
+            const newTime = clickPercentage * audioPlayer.duration;
+            audioPlayer.currentTime = newTime;
+        });
+        audioPlayer.addEventListener('loadedmetadata', () => {
+            totalTimeDisplay.textContent = formatTime(audioPlayer.duration);
+        });
+        function formatTime(seconds) {
+            const minutes = Math.floor(seconds / 60);
+            const remainingSeconds = Math.floor(seconds % 60);
+            return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+        }
+    </script>
+</body>
+
+</html>
