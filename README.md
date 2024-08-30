@@ -1,6 +1,6 @@
 # Spotify play list clone full responsive, hope you enjoy!
 
-![project view](https://github.com/user-attachments/assets/15d3dd3d-f4b7-4b0e-8598-5dc695d6e2e6)
+![project view](https://github.com/user-attachments/assets/c117c11c-1251-4488-8e0c-a13245d17f3c)
 
 - [Demo Project](https://alireza-foroutan.github.io/portfolio/)
 
